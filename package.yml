@@ -1,0 +1,25 @@
+---
+  author: "Sascha Gehlich <sascha@gehlich.us> (http://filshmedia.net)"
+  name: "chromext"
+  description: "chrome extension bootstrap with coffee, jade and stylus"
+  version: "0.0.1"
+  homepage: "http://github.com/saschagehlich/chromext"
+  repository: 
+    url: "git://github.com/saschagehlich/chromext"
+  dependencies: 
+    optparse: "1.0.3"
+    promzard: "0.2.0"
+
+    watch: "git://github.com/mikeal/watch.git#master"
+    coffee-script: "1.3.3"
+    jade: "0.27.2"
+    stylus: "0.29.0"
+
+    underscore: "1.3.3"
+    underscore.string: "2.2.0rc"
+  devDependencies: 
+  optionalDependencies: 
+  engines: 
+    node: "*"
+  bin:
+    chromext: "index.js"
