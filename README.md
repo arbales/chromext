@@ -1,7 +1,7 @@
 chromext
 ========
 
-`chromext` is a command line tool that can create a basic workspace for Chrome Extensions with CoffeeScript, Stylus and Jade support. It includes a compilation system that automatically compiles the source files and watches changes. It's pretty handy.
+`chromext` is a command line tool that can create a basic workspace for Chrome Extensions with CoffeeScript, Stylus and Jade support. It includes a compilation system that automatically compiles the source files and watches changes. Also, it can automatically archive the workspace into a .zip. It's pretty handy.
 
 ## Installation
 
