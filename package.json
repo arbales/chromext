@@ -2,7 +2,7 @@
     "author": "Sascha Gehlich <sascha@gehlich.us> (http://filshmedia.net)",
     "name": "chromext",
     "description": "chrome extension bootstrap with coffee, jade and stylus",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "homepage": "http://github.com/saschagehlich/chromext",
     "repository": {
         "url": "git://github.com/saschagehlich/chromext"
