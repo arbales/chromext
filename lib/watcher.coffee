@@ -31,7 +31,7 @@ class Watcher
           @compile file
 
       monitor.on 'changed', (f, curr, prev) => @compile f
-      monitor.on 'created', (f) => @compile f
+      monitor.on 'created', (f) => unless @filter(f) then @compile f
 
 module.exports =
   coffee: class CoffeeWatcher extends Watcher
