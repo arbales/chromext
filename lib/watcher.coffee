@@ -10,6 +10,8 @@
 fs    = require 'fs'
 path  = require 'path'
 watch = require 'watch'
+{exec}   = require 'child_process'
+mkdirp = require 'mkdirp'
 
 # Compilers
 cs    = require 'coffee-script'
@@ -17,57 +19,77 @@ st    = require 'stylus'
 ja    = require 'jade'
 
 class Watcher
-  constructor: (@inputDir, @outputDir) ->
+  _compile: (f) ->
+    @basename = path.basename f
+    @extless = path.basename f, @input
+    @filename = "#{@outputDir}/#{@extless}#{@output}"
+    @compile arguments...
+  success: ->
+    logger.log @input, "#{@basename} => #{@filename}"
+  error: ->
+    logger.error @input, f + ': ' + e.message
+
+  constructor: (@inputDir, @outputDir, next=false) ->
     try
-      fs.mkdirSync @outputDir
+      mkdirp.sync @outputDir
     catch e
       unless e.code is 'EEXIST'
         throw e
 
-    watch.createMonitor @inputDir, { ignoreDotFiles: true, filter: @filter }, (monitor) =>
-      # Compile on startup
-      for file, info of monitor.files
-        unless @filter file
-          @compile file
+    if next
+      watch.walk @inputDir, { ignoreDotFiles: true, filter: @filter }, (error, files) =>
+        for file, info of files
+          unless @filter file
+            @_compile file
+        next()
 
-      monitor.on 'changed', (f, curr, prev) => @compile f
-      monitor.on 'created', (f) => unless @filter(f) then @compile f
+    else
+      watch.createMonitor @inputDir, { ignoreDotFiles: true, filter: @filter }, (monitor) =>
+        # Compile on startup
+        for file, info of monitor.files
+          unless @filter file
+            @_compile file
+
+        monitor.on 'changed', (f, curr, prev) => @compile f
+        monitor.on 'created', (f) => unless @filter(f) then @compile f
 
 module.exports =
+  vendor: class VendorWatcher extends Watcher
+    filter: (file) -> fs.lstatSync(file).isDirectory()
+    compile: (f) ->
+      exec "cp -f #{f} #{@outputDir}"
+      logger.log 'copy', "#{f.replace(@inputDir + '/', '')} => #{@outputDir}/#{f.replace(@inputDir + '/', '')}"
+
   coffee: class CoffeeWatcher extends Watcher
+    input: 'coffee'
+    output: 'js'
     filter: (file) -> return !file.match(/\.coffee$/i)
     compile: (f) ->
       try
         js = cs.compile fs.readFileSync(f).toString()
-        jsFilename = @outputDir + '/' + path.basename(f, '.coffee') + '.js'
-
-        fs.writeFileSync jsFilename, js
-
-        logger.log 'coffee', "#{f.replace(@inputDir + '/', '')} => #{jsFilename.replace(@outputDir + '/', '')}"
+        fs.writeFileSync @filename, js
+        @success()
       catch e
-        logger.error 'coffee', f + ': ' + e.message
+        @error(e)
 
   jade: class JadeWatcher extends Watcher
+    input: 'jade'
+    output: 'html'
     filter: (file) -> return !file.match(/\.jade$/i)
     compile: (f) ->
       try
         html = ja.compile fs.readFileSync(f).toString()
-        htmlFilename = @outputDir + '/' + path.basename(f, '.jade') + '.html'
-
-        fs.writeFileSync htmlFilename, html()
-
-        logger.log 'jade', "#{f.replace(@inputDir + '/', '')} => #{htmlFilename.replace(@outputDir + '/', '')}"
+        fs.writeFileSync @filename, html()
+        @success()
       catch e
-        logger.error 'jade', f + ': ' + e.message
+        @error e.message
 
   stylus: class StylusWatcher extends Watcher
+    input: 'styl'
+    output: 'css'
     filter: (file) -> return !file.match(/\.styl$/i)
     compile: (f) ->
-        st.render fs.readFileSync(f).toString(), (err, css) =>
-          if err?
-            return logger.error 'stylus', f + ': ' + err
-
-          cssFilename = @outputDir + '/' + path.basename(f, '.styl') + '.css'
-          fs.writeFileSync cssFilename, css
-
-          logger.log 'stylus', "#{f.replace(@inputDir + '/', '')} => #{cssFilename.replace(@outputDir + '/', '')}"
+      st.render fs.readFileSync(f).toString(), (err, css) =>
+        @error(err) if err
+        fs.writeFileSync @filename, css
+        @success()

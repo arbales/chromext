@@ -1,11 +1,11 @@
-chromext
-========
+chromext-arbales, a fork
+================
 
 `chromext` is a command line tool that can create a basic workspace for Chrome Extensions with CoffeeScript, Stylus and Jade support. It includes a compilation system that automatically compiles the source files and watches changes. Also, it can automatically archive the workspace into a .zip. It's pretty handy.
 
 ## Installation
 
-	npm install -g chromext
+	npm install -g chromext-arbales
 
 ## Usage
 
@@ -13,7 +13,7 @@ chromext
 
 Chromext can set up a simple and basic Chrome Extension workspace for you. Simply do:
 
-	chromext init [name]
+	chromext create [name]
 
 This will ask you for a extension name, a description and a version which will be written into the `manifest.json`. If `name` is not given, the extension will be created in the current directory.
 

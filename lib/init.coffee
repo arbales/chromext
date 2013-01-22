@@ -9,23 +9,46 @@
 
 fs       = require 'fs'
 path     = require 'path'
-promzard = require 'promzard'
+prompt   = require 'prompt'
 {exec}   = require 'child_process'
+_        = require 'underscore'
 
-module.exports = ->
-  destPath = if process.argv[3] then path.resolve(process.cwd(), process.argv[3]) else process.cwd()
+module.exports = (destination) ->
+  destPath = if destination then path.resolve(process.cwd(), destination) else process.cwd()
+  pathSplit = destPath.split(path.sep)
+  guessedName = pathSplit[pathSplit.length - 1]
 
-  promzard path.resolve(__dirname, 'manifest.js'), (err, data) =>
+  schema =
+    properties:
+      name:
+        pattern: /^[a-zA-Z\s\-]+$/
+        description: "Extension Name"
+        message: 'Name must be only letters, spaces, or dashes'
+        required: true
+        default: guessedName
+      description:
+        description: "Description"
+        type: "string"
+      version:
+        description: "Version"
+        type: "string"
+        default: "0.1"
+  prompt.message = ""
+  prompt.start()
+  prompt.get schema, (err, result) ->
     if err?
       throw err
 
-    manifestJson = JSON.stringify data, null, "  "
+    _.extend result,
+      background:
+        page: "background.html"
+      manifest_version: 2
+
+    manifest = JSON.stringify result, null, "  "
 
     console.log ""
 
-    ###
-      Copy bootstrap
-    ###
+    # Copy bootstrap
     try
       fs.mkdirSync destPath
     catch e
@@ -44,10 +67,8 @@ module.exports = ->
           logger.log "copy", newFile
 
     process.on 'exit', (statusCode) ->
-      ###
-        Create manifest.json
-      ###
+      # Create manifest.json
 
-      fs.writeFileSync path.resolve(destPath, 'manifest.json'), manifestJson
+      fs.writeFileSync path.resolve(destPath, 'manifest.json'), manifest
       logger.log "create", "manifest.json"
       logger.log "done", ""

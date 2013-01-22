@@ -7,7 +7,7 @@
 # MIT Licensed
 ###
 
-module.exports = 
+module.exports =
   log: (prefix, message) ->
     console.log "   \u001b[1;35m#{prefix} \u001b[m#{message}"
 

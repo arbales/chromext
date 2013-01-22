@@ -10,15 +10,34 @@
 fs       = require 'fs'
 path     = require 'path'
 watcher  = require './watcher'
+_        = require 'underscore'
+{exec}   = require 'child_process'
 
-module.exports = ->
-  watchPath = if process.argv[3] then path.resolve(process.cwd(), process.argv[3]) else process.cwd()
+module.exports = (project, next=false) ->
+  # ~/Workspace/extension/build
+  buildPath = path.resolve project, 'build'
+  manifest = path.resolve(project, 'manifest.json')
+  dirs = [
+    buildPath,
+    jsPath = path.resolve(buildPath, 'javascripts'),
+    cssPath = path.resolve(buildPath, 'stylesheets'),
+    vendorPath = path.resolve(buildPath, 'vendor')
+  ]
 
-  unless fs.existsSync path.resolve(watchPath, 'manifest.json')
-    return logger.error 'error', watchPath + ' was not recognized as a chromext workspace'
+  # Ensure the build paths exist
+  fs.mkdirSync for dir in dirs
 
-  logger.log 'info', 'Initializing watchers...'
+  unless fs.existsSync manifest
+    return logger.error 'error', project + ' was not recognized as a chromext workspace'
+  logger.log 'copy', 'Copying Manifest...'
+  exec "cp -f #{manifest} #{buildPath}"
 
-  coffeeWatcher = new watcher.coffee   path.resolve(watchPath, 'coffee'), path.resolve(watchPath, 'js')
-  jadeWatcher   = new watcher.jade     watchPath, watchPath
-  stylusWatcher = new watcher.stylus   path.resolve(watchPath, 'stylus'), path.resolve(watchPath, 'css')
+  logger.log 'info', 'Initializing compilers...'
+
+  # Poor man's flow control
+  next = _.after 4, next
+
+  coffeeWatcher = new watcher.coffee   path.resolve(project, 'scripts'), jsPath, next
+  jadeWatcher   = new watcher.jade     path.resolve(project, 'pages'), buildPath, next
+  stylusWatcher = new watcher.stylus   path.resolve(project, 'stylesheets'), cssPath, next
+  vendorWatcher = new watcher.vendor   path.resolve(project, 'vendor'), vendorPath, next
