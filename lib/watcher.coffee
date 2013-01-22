@@ -7,51 +7,52 @@
 # MIT Licensed
 ###
 
-fs    = require 'fs'
-path  = require 'path'
-watch = require 'watch'
-{exec}   = require 'child_process'
-mkdirp = require 'mkdirp'
+fs      = require 'fs'
+path    = require 'path'
+watch   = require 'watch'
+{exec}  = require 'child_process'
+mkdirp  = require 'mkdirp'
 
 # Compilers
-cs    = require 'coffee-script'
-st    = require 'stylus'
-ja    = require 'jade'
+cs      = require 'coffee-script'
+st      = require 'stylus'
+ja      = require 'jade'
 
 class Watcher
-  _compile: (f) ->
-    @basename = path.basename f
-    @extless = path.basename f, @input
-    @filename = "#{@outputDir}/#{@extless}#{@output}"
-    @compile arguments...
-  success: ->
-    logger.log @input, "#{@basename} => #{@filename}"
-  error: ->
-    logger.error @input, f + ': ' + e.message
-
   constructor: (@inputDir, @outputDir, next=false) ->
     try
       mkdirp.sync @outputDir
     catch e
       unless e.code is 'EEXIST'
         throw e
-
+    
     if next
       watch.walk @inputDir, { ignoreDotFiles: true, filter: @filter }, (error, files) =>
         for file, info of files
           unless @filter file
             @_compile file
         next()
-
+        
     else
       watch.createMonitor @inputDir, { ignoreDotFiles: true, filter: @filter }, (monitor) =>
         # Compile on startup
         for file, info of monitor.files
           unless @filter file
             @_compile file
-
+  
         monitor.on 'changed', (f, curr, prev) => @compile f
         monitor.on 'created', (f) => unless @filter(f) then @compile f
+        
+  success: ->
+    logger.log @input, "#{@basename} => #{@filename}"
+  error: ->
+    logger.error @input, f + ': ' + e.message
+  
+  _compile: (f) ->
+    @basename = path.basename f
+    @extless = path.basename f, @input
+    @filename = "#{@outputDir}/#{@extless}#{@output}"
+    @compile arguments...
 
 module.exports =
   vendor: class VendorWatcher extends Watcher
@@ -83,7 +84,7 @@ module.exports =
         @success()
       catch e
         @error e.message
-
+        
   stylus: class StylusWatcher extends Watcher
     input: 'styl'
     output: 'css'
