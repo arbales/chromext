@@ -45,8 +45,8 @@ class Watcher
         
   success: ->
     logger.log @input, "#{@basename} => #{@filename}"
-  error: ->
-    logger.error @input, f + ': ' + e.message
+  error: (error) ->
+    logger.error @input, @basename + ': ' + (error['message'] || error || "Compilation failed.")
   
   _compile: (f) ->
     @basename = path.basename f
