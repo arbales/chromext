@@ -72,6 +72,12 @@ module.exports =
         @success()
       catch e
         @error(e)
+        
+  assets: class AssetWatcher extends Watcher
+    filter: (file) -> fs.lstatSync(file).isDirectory()
+    _compile: (f) ->
+      exec "cp -f #{f} #{@outputDir}"
+      logger.log 'copy', "#{f.replace(@inputDir + '/', '')} => #{@outputDir}/#{f.replace(@inputDir + '/', '')}"
 
   jade: class JadeWatcher extends Watcher
     input: 'jade'
