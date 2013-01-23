@@ -37,7 +37,7 @@ module.exports = (project, next=false) ->
   logger.log 'info', 'Initializing compilers...'
 
   # Poor man's flow control
-  next = _.after 5, next
+  next = _.after(5, next) if next
 
   coffeeWatcher = new watcher.coffee   path.resolve(project, 'scripts'), jsPath, next
   jadeWatcher   = new watcher.jade     path.resolve(project, 'pages'), buildPath, next
